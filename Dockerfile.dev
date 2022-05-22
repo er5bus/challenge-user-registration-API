@@ -1,0 +1,20 @@
+FROM er5bus/python-usd:python3.9-slim
+
+LABEL maintainer="Rami sfari <rami2sfari@gmail.com>"
+
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED 1
+
+COPY ./requirements.txt /requirements.txt
+
+RUN addgroup --system fastapi \
+    && adduser --system --ingroup fastapi fastapi
+
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r /requirements.txt
+
+COPY ./src /app/src
+
+WORKDIR /app
+
+EXPOSE 8080 5555

@@ -1,0 +1,44 @@
+version: '2.1'
+services:
+  postgres:
+    image: postgres:12-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DATABASE=$POSTGRES_DATABASE
+    expose:
+      - 5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    env_file:
+      - ./.env
+    ports:
+      - 5000:8080
+    restart: on-failure
+    command: >
+      sh -c "uvicorn src.main:app --host=0.0.0.0 --port=8080 --log-level=debug --reload --reload-dir=./src --use-colors"
+
+  adminer:
+    image: adminer
+    restart: on-failure:5
+    ports:
+      - 8080:8080
+
+volumes:
+  db-data:
